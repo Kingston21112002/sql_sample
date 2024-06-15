@@ -1,2 +1,2 @@
 # sql_sample
-University Course Management
+Employee Management System
