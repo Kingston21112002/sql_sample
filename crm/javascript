@@ -1,0 +1,93 @@
+// Example JavaScript for interacting with REST API endpoints
+
+const apiUrl = 'http://localhost:8080/api/customers'; // Replace with actual API endpoint
+
+// Fetch all customers and populate the customer list
+function fetchCustomers() {
+    fetch(apiUrl)
+        .then(response => response.json())
+        .then(customers => {
+            const customerList = document.getElementById('customer-list');
+            customerList.innerHTML = ''; // Clear existing list
+            customers.forEach(customer => {
+                const li = document.createElement('li');
+                li.innerHTML = `<strong>${customer.customerName}</strong> - ${customer.address} (${customer.phone})
+                                <button onclick="editCustomer(${customer.customerId})">Edit</button>
+                                <button onclick="deleteCustomer(${customer.customerId})">Delete</button>`;
+                customerList.appendChild(li);
+            });
+        })
+        .catch(error => console.error('Error fetching customers:', error));
+}
+
+// Add or edit customer
+function saveCustomer(event) {
+    event.preventDefault();
+    const customerId = document.getElementById('customer-id').value;
+    const customerData = {
+        customerName: document.getElementById('customer-name').value,
+        address: document.getElementById('customer-address').value,
+        phone: document.getElementById('customer-phone').value
+    };
+
+    let method, url;
+    if (customerId) {
+        // Edit existing customer
+        method = 'PUT';
+        url = `${apiUrl}/${customerId}`;
+    } else {
+        // Add new customer
+        method = 'POST';
+        url = apiUrl;
+    }
+
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(customerData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Success:', data);
+        fetchCustomers(); // Refresh customer list
+        document.getElementById('customer-form').reset(); // Clear form inputs
+    })
+    .catch(error => console.error('Error saving customer:', error));
+}
+
+// Edit customer - populate form fields for editing
+function editCustomer(customerId) {
+    fetch(`${apiUrl}/${customerId}`)
+        .then(response => response.json())
+        .then(customer => {
+            document.getElementById('customer-id').value = customer.customerId;
+            document.getElementById('customer-name').value = customer.customerName;
+            document.getElementById('customer-address').value = customer.address;
+            document.getElementById('customer-phone').value = customer.phone;
+        })
+        .catch(error => console.error('Error fetching customer details:', error));
+}
+
+// Delete customer
+function deleteCustomer(customerId) {
+    if (confirm('Are you sure you want to delete this customer?')) {
+        fetch(`${apiUrl}/${customerId}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            console.log('Customer deleted successfully');
+            fetchCustomers(); // Refresh customer list
+        })
+        .catch(error => console.error('Error deleting customer:', error));
+    }
+}
+
+// Fetch customers when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    fetchCustomers();
+});
+
+// Event listener for form submission
+document.getElementById('customer-form').addEventListener('submit', saveCustomer);
